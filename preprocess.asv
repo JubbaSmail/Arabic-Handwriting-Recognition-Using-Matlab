@@ -1,0 +1,37 @@
+function img = preprocess(I,selected_col)
+
+Igray = rgb2gray(I);
+Ibw = im2bw(Igray,graythresh(Igray));
+Iedge = edge(uint8(Ibw));
+%--------------------------------
+se = strel('Line',45,0);
+se1 = strel('Line',10,90);
+Iedge2 = imdilate(Iedge, se); 
+Iedge3 = imdilate(Iedge2, se1);
+%--------------------------------
+% se = strel('square',10);
+% Iedge3 = imdilate(Iedge, se);
+%--------------------------------
+Ifill = imfill(Iedge3,'holes');
+[Ilabel num] = bwlabel(Ifill);
+Iprops = regionprops(Ilabel);
+Ibox = [Iprops.BoundingBox];
+[y,x]=size(Ibox);
+x=x/4;
+Ibox = reshape(Ibox,[4 x]);
+Ic = [Iprops.Centroid];
+[z,w]=size(Ic);%
+w=w/2;%
+Ic = reshape(Ic,[2 w]);%
+Ic = Ic';
+Ic(:,3) = (mean(Ic.^2,2)).^(1/2);
+Ic(:,4) = 1:w;%
+Ic2 = sortrows(Ic,2);
+for cnt = 1:size(Ic2,1)/selected_col
+   Ic2((cnt-1)*selected_col+1:cnt*selected_col,:) = sortrows(Ic2((cnt-1)*selected_col+1:cnt*selected_col,:),4);
+end
+Ic3 = Ic2(:,1:2);
+ind = Ic2(:,4);
+for cnt = 1:(size(Ic2,1)/selected_col)*selected_col
+    img{cnt} = imcrop(Ibw,Ibox(:,ind(cnt)));
+end
